@@ -8,19 +8,17 @@
 
 pcl::PointCloud<pcl::PointXYZRGB>::Ptr visu_pc (new pcl::PointCloud<pcl::PointXYZRGB>);
 
-void simpleVis ()
-{
+void simpleVis (){
   	pcl::visualization::CloudViewer viewer ("Simple Cloud Viewer");
-	while(!viewer.wasStopped())
-	{
-	  viewer.showCloud (visu_pc);
-	  boost::this_thread::sleep(boost::posix_time::milliseconds(1000));
+
+	while(!viewer.wasStopped()){
+		viewer.showCloud (visu_pc);
+		boost::this_thread::sleep(boost::posix_time::milliseconds(1000));
 	}
 
 }
 
-void callback(const pcl::PointCloud<pcl::PointXYZRGB>::ConstPtr& msg)
-{
+void callback(const pcl::PointCloud<pcl::PointXYZRGB>::ConstPtr& msg){
 	pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud (new pcl::PointCloud<pcl::PointXYZRGB>(*msg));
 	pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud_filtered (new pcl::PointCloud<pcl::PointXYZRGB>);
 
@@ -36,17 +34,15 @@ void callback(const pcl::PointCloud<pcl::PointXYZRGB>::ConstPtr& msg)
 	visu_pc = cloud_filtered;
 }
 
-int main(int argc, char** argv)
-{
-  ros::init(argc, argv, "sub_pcl");
-  ros::NodeHandle nh;
-  ros::Subscriber sub = nh.subscribe<pcl::PointCloud<pcl::PointXYZRGB> >("/camera/depth/points", 1, callback);
+int main(int argc, char** argv){
+	ros::init(argc, argv, "sub_pcl");
+	ros::NodeHandle nh;
+	ros::Subscriber sub = nh.subscribe<pcl::PointCloud<pcl::PointXYZRGB> >("/camera/depth/points", 1, callback);
 
-  boost::thread t(simpleVis);
+	boost::thread t(simpleVis);
 
-  while(ros::ok())
-  {
-	ros::spinOnce();
-  }
+	while(ros::ok()){
+		ros::spinOnce();
+	}
 
 }
