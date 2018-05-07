@@ -17,6 +17,8 @@
 #include <vector>
 #include <fstream>
 #include <string>
+#include <stdio.h>
+#include <math.h>
 
 pcl::PointCloud<pcl::PointXYZRGB>::Ptr visu_pc (new pcl::PointCloud<pcl::PointXYZRGB>);
 std::vector<pcl::PointCloud<pcl::PointXYZRGB>::Ptr > clouds;
@@ -128,6 +130,60 @@ void filterCloudPoint(pcl::PointCloud<pcl::PointXYZRGB>::Ptr& cloud, pcl::PointC
 
 
 void processAllFiles(){
+
+
+	int size = 10;
+
+	char* message = " Te quiero Julia ";
+	int n = strlen(message);
+
+	int print_line = 4;
+	
+	printf("\n");
+	printf("\n");
+
+	for (int x = 0; x < size; x++)
+	{
+		for (int y = 0; y <= 4 * size; y++)
+		{
+			double dist1 = sqrt(pow(x - size, 2) + pow(y - size, 2));
+			double dist2 = sqrt(pow(x - size, 2) + pow(y - 3 * size, 2));
+
+			if (dist1 < size + 0.5 || dist2 < size + 0.5)
+				printf("\033[1;31m*");
+			else
+				printf("\033[1;31m ");
+		}
+		printf("\n");
+	}
+
+	for (int x = 1; x < 2 * size; x++)
+	{
+		for (int y = 0; y < x; y++)
+			printf(" ");
+
+		for (int y = 0; y < 4 * size + 1 - 2 * x; y++)
+		{
+			if (x >= print_line - 1 && x <= print_line + 1)
+			{
+				int idx = y - (4 * size - 2 * x - n) / 2;
+				if (idx < n && idx >= 0)
+				{
+					if (x == print_line)
+						printf("%c", message[idx]);
+					else
+						printf(" ");
+				}
+				else
+					printf("*");
+			}
+			else
+				printf("*");
+		}
+		printf("\n");
+	}
+
+
 	for(unsigned i=0;i<clouds.size()-1;i++){
 		pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud_filtered_left (new pcl::PointCloud<pcl::PointXYZRGB>);
 		pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud_filtered_right (new pcl::PointCloud<pcl::PointXYZRGB>);
@@ -166,7 +222,7 @@ void processAllFiles(){
   		Eigen::Matrix4f transformation = correspondencesRejection(keypoints_left, keypoints_right, correspondences, correspondencesRejected);
 
 
-  		cout << "\033[1;33mProgress: " << i << "/" << clouds.size()-2 << "\033[0m" << endl;
+  		cout << "\033[0m\033[1;33mProgress: " << i << "/" << clouds.size()-2 << "\033[0m" << endl;
   		cout << "\tCloud \033[1;35mleft\033[0m points in cloud after VG: \033[1;35m" << (*cloud_filtered_left).size() << "\033[0m" << endl;
   		cout << "\tCloud \033[1;35mleft\033[0m normal points in cloud: \033[1;35m" << (*cloud_normals_left).size() << "\033[0m" << endl;
   		cout << "\tCloud \033[1;35mleft\033[0m keypoints: \033[1;35m" << (*keypoints_left).size() << "\033[0m" << endl;
