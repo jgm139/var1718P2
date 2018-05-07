@@ -134,7 +134,7 @@ void processAllFiles(){
 
 	int size = 10;
 
-	char* message = " Te quiero Julia ";
+	char message[] = " Te quiero Julia ";
 	int n = strlen(message);
 
 	int print_line = 4;
