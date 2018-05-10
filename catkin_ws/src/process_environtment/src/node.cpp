@@ -14,6 +14,9 @@
 #include <pcl/registration/correspondence_rejection_sample_consensus.h>
 #include <pcl/keypoints/iss_3d.h>
 #include <pcl/correspondence.h>
+
+#include <pcl/console/time.h>
+
 #include <vector>
 #include <fstream>
 #include <string>
@@ -131,59 +134,9 @@ void filterCloudPoint(pcl::PointCloud<pcl::PointXYZRGB>::Ptr& cloud, pcl::PointC
 
 void processAllFiles(){
 
+	pcl::console::TicToc tc;
 
-	int size = 10;
-
-	char message[] = " Te quiero Julia ";
-	int n = strlen(message);
-
-	int print_line = 4;
-	
-	printf("\n");
-	printf("\n");
-
-	for (int x = 0; x < size; x++)
-	{
-		for (int y = 0; y <= 4 * size; y++)
-		{
-			double dist1 = sqrt(pow(x - size, 2) + pow(y - size, 2));
-			double dist2 = sqrt(pow(x - size, 2) + pow(y - 3 * size, 2));
-
-			if (dist1 < size + 0.5 || dist2 < size + 0.5)
-				printf("\033[1;31m*");
-			else
-				printf("\033[1;31m ");
-		}
-		printf("\n");
-	}
-
-	for (int x = 1; x < 2 * size; x++)
-	{
-		for (int y = 0; y < x; y++)
-			printf(" ");
-
-		for (int y = 0; y < 4 * size + 1 - 2 * x; y++)
-		{
-			if (x >= print_line - 1 && x <= print_line + 1)
-			{
-				int idx = y - (4 * size - 2 * x - n) / 2;
-				if (idx < n && idx >= 0)
-				{
-					if (x == print_line)
-						printf("%c", message[idx]);
-					else
-						printf(" ");
-				}
-				else
-					printf("*");
-			}
-			else
-				printf("*");
-		}
-		printf("\n");
-	}
-
-
+	tc.tic();
 	for(unsigned i=0;i<clouds.size()-1;i++){
 		pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud_filtered_left (new pcl::PointCloud<pcl::PointXYZRGB>);
 		pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud_filtered_right (new pcl::PointCloud<pcl::PointXYZRGB>);
@@ -215,8 +168,6 @@ void processAllFiles(){
   		// Buscamos las correspondencias
   		matchFeatures(fpfhs_left, fpfhs_right, correspondences);
 
-
-  		
   		// Filtramos las correspondencias
   		// Obtenemos la matriz de transformación
   		Eigen::Matrix4f transformation = correspondencesRejection(keypoints_left, keypoints_right, correspondences, correspondencesRejected);
@@ -243,12 +194,17 @@ void processAllFiles(){
 			filteredClouds.push_back(cloud_filtered_right);
 		}
 	}
+	std::cout << "Ha tardado: " << tc.toc() << std::endl;
 }
 
 void alignAll(){
+	
+	
 	cout << "Aligning..." << endl;
 	pcl::PointCloud<pcl::PointXYZRGB>::Ptr transformed_cloud_out (new pcl::PointCloud<pcl::PointXYZRGB>);
     pcl::transformPointCloud(*filteredClouds[0], *transformed_cloud_out, transformations[0]);
+	
+	
 	*visu_pc = *transformed_cloud_out+*filteredClouds[1];
 	cout << "\033[1;33m\t" << 0 << setw(2) << "/ " << transformations.size()-1 << "\r\033[0m" << std::flush;
 	for(unsigned int i=1;i<transformations.size();i++){
@@ -258,7 +214,7 @@ void alignAll(){
 		cout << "\033[1;33m\t" << i << setw(2) << "/ " << transformations.size()-1 << "\r\033[0m" << std::flush;
 	}
 	cout << endl;
-	cout << "\033[1;31mAligning Done.\033[0m" << endl;
+	cout << "\033[1;32mAligning Done.\033[0m" << endl;
 	pcl::PointCloud<pcl::PointXYZRGB>::Ptr final (new pcl::PointCloud<pcl::PointXYZRGB>);
 	filterCloudPoint(visu_pc, final);
 	visu_pc = final;
