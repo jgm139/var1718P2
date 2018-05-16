@@ -1,9 +1,0 @@
-pointsCloudsFiles/cloud2.pcd
-pointsCloudsFiles/cloud3.pcd
-pointsCloudsFiles/cloud4.pcd
-pointsCloudsFiles/cloud5.pcd
-pointsCloudsFiles/cloud6.pcd
-pointsCloudsFiles/cloud7.pcd
-pointsCloudsFiles/cloud8.pcd
-pointsCloudsFiles/cloud9.pcd
-pointsCloudsFiles/cloud10.pcd

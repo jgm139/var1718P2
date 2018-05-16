@@ -23,6 +23,22 @@
 #include <stdio.h>
 #include <math.h>
 
+#define PRINT_INFO	cout << "\033[0m\033[1;33mProgress: " << i << "/" << clouds.size()-2 << "\033[0m" << endl; \
+  					cout << "\tCloud \033[1;35mleft\033[0m points in cloud after VG: \033[1;35m" << (*cloud_filtered_left).size() << "\033[0m" << endl; \
+			  		cout << "\tCloud \033[1;35mleft\033[0m normal points in cloud: \033[1;35m" << (*cloud_normals_left).size() << "\033[0m" << endl; \
+			  		cout << "\tCloud \033[1;35mleft\033[0m keypoints: \033[1;35m" << (*keypoints_left).size() << "\033[0m" << endl; \
+			  		cout << "\tCloud \033[1;35mleft\033[0m descriptors: \033[1;35m" << (*fpfhs_left).size() << "\033[0m" << endl; \
+			  		cout << "\tCloud \033[1;36mright\033[0m points in cloud after VG: \033[1;36m" << (*cloud_filtered_right).size() << "\033[0m" << endl; \
+			  		cout << "\tCloud \033[1;36mright\033[0m normal points in cloud: \033[1;36m" << (*cloud_normals_right).size() << "\033[0m" << endl; \
+			  		cout << "\tCloud \033[1;36mright\033[0m keypoints: \033[1;36m" << (*keypoints_right).size() << "\033[0m" << endl; \
+			  		cout << "\tCloud \033[1;36mright\033[0m descriptors: \033[1;36m" << (*fpfhs_right).size() << "\033[0m" << endl; \
+			  		cout << "------------------------------------------------" << endl; \
+			  		cout << "\033[1;32mCorrespondences found: " << correspondences.size() << endl; \
+			  		cout << "\033[1;31mCorrespondences rejected: " << correspondencesRejected.size() << "\033[0m" << endl; \
+			  		cout << "------------------------------------------------" << endl << endl;
+  		
+
+
 pcl::PointCloud<pcl::PointXYZRGB>::Ptr visu_pc (new pcl::PointCloud<pcl::PointXYZRGB>);
 std::vector<pcl::PointCloud<pcl::PointXYZRGB>::Ptr > clouds;
 std::vector<pcl::PointCloud<pcl::PointXYZRGB>::Ptr > filteredClouds;
@@ -172,20 +188,7 @@ void processAllFiles(){
   		// Obtenemos la matriz de transformación
   		Eigen::Matrix4f transformation = correspondencesRejection(keypoints_left, keypoints_right, correspondences, correspondencesRejected);
 
-
-  		cout << "\033[0m\033[1;33mProgress: " << i << "/" << clouds.size()-2 << "\033[0m" << endl;
-  		cout << "\tCloud \033[1;35mleft\033[0m points in cloud after VG: \033[1;35m" << (*cloud_filtered_left).size() << "\033[0m" << endl;
-  		cout << "\tCloud \033[1;35mleft\033[0m normal points in cloud: \033[1;35m" << (*cloud_normals_left).size() << "\033[0m" << endl;
-  		cout << "\tCloud \033[1;35mleft\033[0m keypoints: \033[1;35m" << (*keypoints_left).size() << "\033[0m" << endl;
-  		cout << "\tCloud \033[1;35mleft\033[0m descriptors: \033[1;35m" << (*fpfhs_left).size() << "\033[0m" << endl;
-  		cout << "\tCloud \033[1;36mright\033[0m points in cloud after VG: \033[1;36m" << (*cloud_filtered_right).size() << "\033[0m" << endl;
-  		cout << "\tCloud \033[1;36mright\033[0m normal points in cloud: \033[1;36m" << (*cloud_normals_right).size() << "\033[0m" << endl;
-  		cout << "\tCloud \033[1;36mright\033[0m keypoints: \033[1;36m" << (*keypoints_right).size() << "\033[0m" << endl;
-  		cout << "\tCloud \033[1;36mright\033[0m descriptors: \033[1;36m" << (*fpfhs_right).size() << "\033[0m" << endl;
-  		cout << "------------------------------------------------" << endl;
-  		cout << "\033[1;32mCorrespondences found: " << correspondences.size() << endl;
-  		cout << "\033[1;31mCorrespondences rejected: " << correspondencesRejected.size() << "\033[0m" << endl;
-  		cout << "------------------------------------------------" << endl << endl;
+  		PRINT_INFO;
   		
   		//getTransformation(keypoints_left, keypoints_right, correspondences, transformation);
 		transformations.push_back(transformation);
