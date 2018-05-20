@@ -234,7 +234,6 @@ void callback(const pcl::PointCloud<pcl::PointXYZRGB>::ConstPtr& msg){
 	  		if(correspondencesRejected.size() > correspondences.size()/1.25){
 	  			//search globaly
 
-
 		  		pcl::PointCloud<pcl::PointNormal>::Ptr cloud_normals_global (new pcl::PointCloud<pcl::PointNormal>);
 				pcl::PointCloud<pcl::PointWithScale>::Ptr keypoints_global (new pcl::PointCloud<pcl::PointWithScale> ());
 		  		pcl::PointCloud<pcl::FPFHSignature33>::Ptr fpfhs_global (new pcl::PointCloud<pcl::FPFHSignature33> ());

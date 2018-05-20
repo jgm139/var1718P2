@@ -22,6 +22,7 @@ void simpleVis (){
 		boost::this_thread::sleep(boost::posix_time::milliseconds(1000));
 	}
 }
+
 void saveCloudPoints(){
 	ofstream f;
 	f.open("listOfPointClouds.txt");
