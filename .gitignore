@@ -2,3 +2,5 @@ catkin_ws/build/*
 catkin_ws/devel/*
 catkin_ws/*.inf
 catkin_ws/pointsCloudsFiles
+.vscode
+doc/.ipynb_checkpoints
