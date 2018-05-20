@@ -43,4 +43,4 @@ rosrun process_environtment process_environtment_node
 ---
 
 ### Documentación
-> Para mayor detalle de la implementación de la práctica, así como los experimentos, ver [VAR1718_P2.ipynb](https://github.com/jgm139/var1718P2/blob/master/doc/VAR1718P2.md).
+> Para mayor detalle de la implementación de la práctica, así como los experimentos, ver [VAR1718_P2.md](https://github.com/jgm139/var1718P2/blob/master/doc/VAR1718P2.md).
