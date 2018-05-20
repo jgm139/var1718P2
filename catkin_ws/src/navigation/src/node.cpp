@@ -15,6 +15,7 @@
 #include <pcl/features/fpfh.h>
 #include <pcl/registration/icp.h>
 #include <pcl/registration/correspondence_rejection_sample_consensus.h>
+#include <pcl/filters/statistical_outlier_removal.h>
 #include <pcl/keypoints/iss_3d.h>
 #include <pcl/correspondence.h>
 #include <pcl/console/time.h>
@@ -47,6 +48,7 @@ pcl::PointCloud<pcl::FPFHSignature33>::Ptr fpfhs_left (new pcl::PointCloud<pcl::
 
 void estimateNormals(pcl::PointCloud<pcl::PointXYZRGB>::Ptr& cloud, pcl::PointCloud<pcl::PointNormal>::Ptr& cloud_normals){
   	pcl::NormalEstimation<pcl::PointXYZRGB, pcl::PointNormal> ne;
+  	
   	pcl::search::KdTree<pcl::PointXYZRGB>::Ptr tree_n(new pcl::search::KdTree<pcl::PointXYZRGB>());
 
  	ne.setInputCloud(cloud);
@@ -83,18 +85,16 @@ void calculateFeatures(pcl::PointCloud<pcl::PointXYZRGB>::Ptr& cloud, pcl::Point
 	pcl::PointCloud<pcl::PointNormal>::Ptr& cloud_normals, pcl::PointCloud<pcl::FPFHSignature33>::Ptr& fpfhs){
 	
 	pcl::PointCloud<pcl::PointXYZRGB>::Ptr keypoints_xyzrgb(new pcl::PointCloud<pcl::PointXYZRGB>);
-	pcl::copyPointCloud (*keypoints, *keypoints_xyzrgb);
 	
+	pcl::copyPointCloud (*keypoints, *keypoints_xyzrgb);
+  	
+  	pcl::search::KdTree<pcl::PointXYZRGB>::Ptr tree(new pcl::search::KdTree<pcl::PointXYZRGB> ());
 	pcl::FPFHEstimation<pcl::PointXYZRGB, pcl::PointNormal, pcl::FPFHSignature33> fpfh;
   	fpfh.setInputCloud (keypoints_xyzrgb);
   	fpfh.setInputNormals (cloud_normals);
 	fpfh.setSearchSurface (cloud);
-
-  	pcl::search::KdTree<pcl::PointXYZRGB>::Ptr tree(new pcl::search::KdTree<pcl::PointXYZRGB> ());
 	fpfh.setSearchMethod(tree);
-
   	fpfh.setRadiusSearch (0.07);
-
   	fpfh.compute (*fpfhs);
 }
 
@@ -104,7 +104,7 @@ void matchFeatures(pcl::PointCloud<pcl::FPFHSignature33>::Ptr& source_features, 
 	pcl::registration::CorrespondenceEstimation<pcl::FPFHSignature33, pcl::FPFHSignature33> est;
 	est.setInputSource(source_features);
 	est.setInputTarget(target_features);
-	est.determineReciprocalCorrespondences (correspondences);
+	est.determineReciprocalCorrespondences (correspondences); // Probar distancias como segundo parámetro 0.07 
 }
 
 Eigen::Matrix4f correspondencesRejection(pcl::PointCloud<pcl::PointWithScale>::Ptr& keypoints_1, pcl::PointCloud<pcl::PointWithScale>::Ptr& keypoints_2,
@@ -113,11 +113,11 @@ Eigen::Matrix4f correspondencesRejection(pcl::PointCloud<pcl::PointWithScale>::P
 	pcl::CorrespondencesConstPtr correspondences_p(new pcl::Correspondences(correspondences));
 
     pcl::registration::CorrespondenceRejectorSampleConsensus<pcl::PointWithScale> sac;
-    sac.setInputSource(keypoints_1); // reverse? (2 for 1)
-    sac.setInputTarget(keypoints_2); // reverse (1 for 2) 
-    sac.setInlierThreshold(0.025); // Too much? default 0.01 
-    sac.setMaximumIterations(10000); //default 1000 
-    sac.setRefineModel(true); // default false 
+    sac.setInputSource(keypoints_1);
+    sac.setInputTarget(keypoints_2);
+    sac.setInlierThreshold(0.025);
+    sac.setMaximumIterations(10000);
+    sac.setRefineModel(true);
     sac.setInputCorrespondences(correspondences_p); 
     sac.getCorrespondences(correspondences_out);
     return sac.getBestTransformation();
@@ -131,6 +131,14 @@ void filterCloudPoint(pcl::PointCloud<pcl::PointXYZRGB>::Ptr& cloud, pcl::PointC
 	vGrid.filter (*filtered);
 }
 
+void filterSor(pcl::PointCloud<pcl::PointXYZRGB>::Ptr& cloud, pcl::PointCloud<pcl::PointXYZRGB>::Ptr& cloud_filtered){
+
+	pcl::StatisticalOutlierRemoval<pcl::PointXYZRGB> sor;
+  	sor.setInputCloud (cloud);
+  	sor.setMeanK (100); // Probar valores
+  	sor.setStddevMulThresh (0.25); //Probar valores
+  	sor.filter (*cloud_filtered);
+}
 
 
 class RobotDriver{
@@ -157,7 +165,7 @@ class RobotDriver{
 			system ("/bin/stty raw");
 			while(nh_.ok()){
 				cmd = getchar();
-				if(cmd!='w' && cmd!='a' && cmd!='d' && cmd!='b' && cmd!='.'){
+				if(cmd!='w' && cmd!='a' && cmd!='d' && cmd!='.'){
 					cout << "unknown command:" << cmd << "\n";
 					continue;
 				}
@@ -174,12 +182,6 @@ class RobotDriver{
 					case 'd':
 						base_cmd.angular.z += -0.3;
 						capture = true;
-						break;
-					case 'b':
-						cout << "Changes restored." << endl;
-						visu_pc = visu_pc_save;
-						keypoints_last = keypoints_last_save;
-						fpfhs_left = fpfhs_left_save;
 						break;
 					case '.':
 						goto end;
@@ -204,6 +206,7 @@ void callback(const pcl::PointCloud<pcl::PointXYZRGB>::ConstPtr& msg){
 
 			pcl::PointCloud<pcl::PointXYZRGB>::Ptr msgP(new pcl::PointCloud<pcl::PointXYZRGB>(*msg));
 			pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud_filtered_right (new pcl::PointCloud<pcl::PointXYZRGB>);
+			pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud_filtered_sor_right (new pcl::PointCloud<pcl::PointXYZRGB>);
 	  		pcl::PointCloud<pcl::PointNormal>::Ptr cloud_normals_right (new pcl::PointCloud<pcl::PointNormal>);
 			pcl::PointCloud<pcl::PointWithScale>::Ptr keypoints_right (new pcl::PointCloud<pcl::PointWithScale> ());
 	  		pcl::PointCloud<pcl::FPFHSignature33>::Ptr fpfhs_right (new pcl::PointCloud<pcl::FPFHSignature33> ());
@@ -213,14 +216,17 @@ void callback(const pcl::PointCloud<pcl::PointXYZRGB>::ConstPtr& msg){
 			// Filtramos los puntos
 			filterCloudPoint(msgP, cloud_filtered_right);
 			
+			// Aplicamos Sor
+			filterSor(cloud_filtered_right, cloud_filtered_sor_right);
+
 			// Conseguimos las normales
-	  		estimateNormals(cloud_filtered_right, cloud_normals_right);
+	  		estimateNormals(cloud_filtered_sor_right, cloud_normals_right);
 
 			// Sacamos puntos característicos
-			calculateKeyPoints(cloud_filtered_right, cloud_normals_right, keypoints_right);
+			calculateKeyPoints(cloud_filtered_sor_right, cloud_normals_right, keypoints_right);
 
 			// Calculamos features de los keypoints		
-	  		calculateFeatures(cloud_filtered_right, keypoints_right, cloud_normals_right, fpfhs_right);
+	  		calculateFeatures(cloud_filtered_sor_right, keypoints_right, cloud_normals_right, fpfhs_right);
 
 	  		// Buscamos las correspondencias
 	  		matchFeatures(fpfhs_left, fpfhs_right, correspondences);
@@ -263,7 +269,12 @@ void callback(const pcl::PointCloud<pcl::PointXYZRGB>::ConstPtr& msg){
 		  		cout << "\033[1;32mCorrespondences found: " << correspondences_global.size() << endl; \
 	  			cout << "\033[1;31mCorrespondences rejected: " << correspondencesRejected_global.size() << "\033[0m" << endl; \
 		  		cout << "------------------------------------------------" << endl << endl;			
-	  			if(correspondencesRejected_global.size() > correspondences_global.size()/1.25)	return;
+	  			if(correspondencesRejected_global.size() > correspondences_global.size()/1.25){
+	  				visu_pc = visu_pc_save;
+					keypoints_last = keypoints_last_save;
+					fpfhs_left = fpfhs_left_save;
+					return;
+	  			}	
 			
 	  			*keypoints_last = *keypoints_right;
 		  		*fpfhs_left = *fpfhs_right;
@@ -288,20 +299,26 @@ void callback(const pcl::PointCloud<pcl::PointXYZRGB>::ConstPtr& msg){
     		pcl::transformPointCloud(*visu_pc, *transformed_cloud, transformation);
 
   			*visu_pc = *transformed_cloud + *cloud_filtered_right;
+			
 			pcl::PointCloud<pcl::PointXYZRGB>::Ptr filtrado (new pcl::PointCloud<pcl::PointXYZRGB>);
-  			
   			filterCloudPoint(visu_pc, filtrado);
 
   			visu_pc = filtrado;
-			
+
 		}else{
 			*visu_pc = *msg;
+			
 			pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud_filtered_last (new pcl::PointCloud<pcl::PointXYZRGB>);
 			filterCloudPoint(visu_pc, cloud_filtered_last);
+			
+			pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud_filtered_sor_last (new pcl::PointCloud<pcl::PointXYZRGB>);
+			filterSor(cloud_filtered_last, cloud_filtered_sor_last);
+
 			pcl::PointCloud<pcl::PointNormal>::Ptr cloud_normals_last (new pcl::PointCloud<pcl::PointNormal>);
-	  		estimateNormals(cloud_filtered_last, cloud_normals_last);
-			calculateKeyPoints(cloud_filtered_last, cloud_normals_last, keypoints_last);
-	  		calculateFeatures(cloud_filtered_last, keypoints_last, cloud_normals_last, fpfhs_left);
+	  		estimateNormals(cloud_filtered_sor_last, cloud_normals_last);
+			
+			calculateKeyPoints(cloud_filtered_sor_last, cloud_normals_last, keypoints_last);
+	  		calculateFeatures(cloud_filtered_sor_last, keypoints_last, cloud_normals_last, fpfhs_left);
 			first = false;
 		}
 	}
