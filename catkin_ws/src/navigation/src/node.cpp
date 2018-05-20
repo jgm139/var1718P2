@@ -155,7 +155,7 @@ class RobotDriver{
 		void driveKeyboard(){
 			cout << "Type a command.  "
 				"\n\tw: to go foward. \n\ta: to turn left."
-				"\n\td: to turn right. \n\tb: to undo last capture.\n"
+				"\n\td: to turn right."
 				"\n\t.: to exit.\n";
 
 			geometry_msgs::Twist base_cmd;
